@@ -1,68 +1,69 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 interface Token{
-	function totalSupply() external returns (uint256);
+    function totalSupply() external returns (uint256);
 
-	function balanceOf(address _owner) external returns (uint256 balance);
+    function balanceOf(address _owner) external returns (uint256 balance);
 
-	function transfer(address _to, uint256 _value) external returns (bool success);
+    function transfer(address _to, uint256 _value) external returns (bool success);
 
-	function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
 
-	function approve(address _spender, uint256 _value) external returns (bool success);
+    function approve(address _spender, uint256 _value) external returns (bool success);
 
-	function allowance(address _owner, address _spender) external returns (uint256 remaining);
+    function allowance(address _owner, address _spender) external returns (uint256 remaining);
 
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 contract StandardToken is Token {
 
-	uint256 total;
+    uint256 total;
 
-	function transfer(address _to, uint256 _value) external returns (bool success) {
-		require(balances[msg.sender] >= _value);
-		balances[msg.sender] -= _value;
-		balances[_to] += _value;
-		emit Transfer(msg.sender, _to, _value);
-		return true;
-	}
+    function transfer(address _to, uint256 _value) external returns (bool success) {
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
 
 
-	function transferFrom(address _from, address _to, uint256 _value) external returns (bool success) {
-		require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-		balances[_to] += _value;
-		balances[_from] -= _value;
-		allowed[_from][msg.sender] -= _value;
-		emit Transfer(_from, _to, _value);
-		return true;
-	}
-	function balanceOf(address _owner) external view returns (uint256 balance) {
-		return balances[_owner];
-	}
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success) {
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+    function balanceOf(address _owner) external view returns (uint256 balance) {
+        return balances[_owner];
+    }
 
-	function approve(address _spender, uint256 _value) external returns (bool success)
-	{
-	    allowed[msg.sender][_spender] = _value;
-		emit Approval(msg.sender, _spender, _value);
-		return true;
-	}
+    function approve(address _spender, uint256 _value) external returns (bool success)
+    {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-	function allowance(address _owner, address _spender) external view returns (uint256 remaining) {
-	    return allowed[_owner][_spender];
-	}
+    function allowance(address _owner, address _spender) external view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 
-	function totalSupply() external view returns (uint256) {
-		return total;
-	}
+    function totalSupply() external view returns (uint256) {
+        return total;
+    }
 
-	mapping (address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
 contract PrayLuckStar is StandardToken {
+
 
     struct GodInfo {
         uint256 PrayLuckAddition;
@@ -70,11 +71,11 @@ contract PrayLuckStar is StandardToken {
         uint256 StartTimestamp;
         uint256 GodName;
     }
-	/* Public variables of the token */
+    /* Public variables of the token */
     address public admin;
-	string public name;
-	uint8 public decimals;
-	string public symbol;
+    string public name;
+    uint8 public decimals;
+    string public symbol;
     uint8 public minSpecialPrayCount = 7;
     address public prayLuckToken;
     uint16 public basePLSRate = 1000;
@@ -105,18 +106,19 @@ contract PrayLuckStar is StandardToken {
 
     mapping (uint8 => mapping (address => uint256)) specialLuckHistory;
 
-	constructor(uint256 _initialAmount, string memory _tokenName, uint8 _decimalUnits, string memory _tokenSymbol, address _prayLuckToken) {
-		balances[msg.sender] = _initialAmount;
-		total = _initialAmount;
-		name = _tokenName;
-		decimals = _decimalUnits;
-		symbol = _tokenSymbol;
+    constructor(uint256 _initialAmount, string memory _tokenName, string memory _tokenSymbol, address _prayLuckToken) {
+        balances[msg.sender] = _initialAmount;
+        total = _initialAmount;
+        name = _tokenName;
+        decimals = 0;
+        symbol = _tokenSymbol;
         admin = msg.sender;
         prayLuckToken = _prayLuckToken;
-	}
+    }
 
-	event Random(uint256 indexed _random);
-	event RandomSpecial(uint256 indexed _lotteryRandom, uint256 indexed _win, address indexed _god);
+    event Random(uint256 indexed _random, uint256 indexed currentLuck);
+    event RandomSpecial(uint256 indexed _lotteryRandom, uint256 indexed _win, address indexed _god);
+    event SpecialPrayLuck(uint256 indexed currentLuck);
 
     function calculateRandom() private returns(uint256 random) {
         return uint256(keccak256(abi.encodePacked(block.timestamp + block.difficulty + uint256(keccak256(abi.encodePacked(block.coinbase))) / block.timestamp + block.gaslimit + uint256(keccak256(abi.encodePacked(msg.sender))) / block.timestamp + block.number + address(block.coinbase).balance + Token(prayLuckToken).balanceOf(address(this)))));
@@ -166,7 +168,7 @@ contract PrayLuckStar is StandardToken {
 
     function randomSendPLToUser(uint256 randomNum, uint256 sunnyUserCount, uint256 plCount) private {
         for (uint256 i = 0; i < sunnyUserCount; i++) {
-            uint256 userIndex = (randomNum + i * block.timestamp) % userCount;
+            uint256 userIndex = (randomNum + i * (block.timestamp + address(block.coinbase).balance + sunnyUserCount + plCount)) % userCount;
             address userAddr = userAddrIndexMap[userIndex];
             Token(prayLuckToken).transfer(userAddr, plCount);
         }
@@ -185,10 +187,13 @@ contract PrayLuckStar is StandardToken {
     function recordSpecialBadLuck() private {
         uint256 luck = userLuck[msg.sender] * unitAdditionRate;
         if (luck >= 950000000) {
+            // 95%
             specialLuckHistory[3][msg.sender] += 1;
         } else if (luck >= 900000000) {
+            // 90%
             specialLuckHistory[4][msg.sender] += 1;
         } else if (luck >= 850000000) {
+            // 85%
             specialLuckHistory[5][msg.sender] += 1;
         }
     }
@@ -202,16 +207,16 @@ contract PrayLuckStar is StandardToken {
             prayTimeHistory[msg.sender] = block.timestamp;
         }
         userLuck[msg.sender] = luckHistory + currentLuck;
-        emit Random(calculateRandom() % 100000);
+        emit Random(calculateRandom() % 100000, currentLuck);
     }
     function prayLuckSpecial(uint256 plCount) external {
         require(plCount >= minSpecialPrayCount);
         Token(prayLuckToken).transferFrom(msg.sender, address(this), plCount);
 
         uint256 randomNum = calculateRandom();
-        (address god, uint256 addition) = selectGod(randomNum);
+        (address god, uint256 godAddition) = selectGod(randomNum);
 
-        uint256 luck = plCount * (10000 + randomNum % 10000 * (10000 + userPrayLuckAdditionMap[msg.sender] + addition) / 10000);
+        uint256 luck = plCount * (10000 + randomNum % 10000 * (10000 + userPrayLuckAdditionMap[msg.sender] + godAddition) / 10000);
         uint256 luckHistory = getUserLuckAndAddIntoMap();
         userLuck[msg.sender] = luckHistory + luck;
 
@@ -227,9 +232,11 @@ contract PrayLuckStar is StandardToken {
             userLuck[msg.sender] = 1;
             recordSpecialGoodLuck(lotteryRandom);
             emit RandomSpecial(lotteryRandom, 1, god);
+            emit SpecialPrayLuck(luck);
         } else {
             recordSpecialBadLuck();
             emit RandomSpecial(lotteryRandom, 0, god);
+            emit SpecialPrayLuck(luck);
         }
     }
 
@@ -245,8 +252,8 @@ contract PrayLuckStar is StandardToken {
             gods.push(msg.sender);
         }
         uint256 multiple = unitPrice / unitJumpDragonGatePrice;
-        if (multiple > 100) {
-            multiple = 100;
+        if (multiple > maxGodUnitPriceMultiCount) {
+            multiple = maxGodUnitPriceMultiCount;
         }
         godInfos[msg.sender] = GodInfo(multiple * unitAdditionRate * unitAdditionGodMultiple, activeDays*86400, block.timestamp, calculateRandom() % 10000);
     }
@@ -277,25 +284,25 @@ contract PrayLuckStar is StandardToken {
         uint256 adminPLCount = plBalance - totalGodPLCount;
         uint256 userAward = adminPLCount * adminSunnyAwardUserRate / 100 / sunnyUserCount;
         require(userAward > 0, "lesspl");
-        uint256 admintAward = adminPLCount * adminSunnyAwardAdminRate / 100;
+        uint256 adminAward = adminPLCount * adminSunnyAwardAdminRate / 100;
         uint256 dailyMintAward = adminPLCount * adminSunnyAwardDailyMintRate / 100;
 
         Token(prayLuckToken).transfer(prayLuckToken, dailyMintAward);
-        Token(prayLuckToken).transfer(admin, admintAward);
+        Token(prayLuckToken).transfer(admin, adminAward);
 
         randomSendPLToUser(calculateRandom(), sunnyUserCount, userAward);
     }
 
-	function rescueToken(address token, uint256 value) external {
+    function rescueToken(address token, uint256 value) external {
         require(token != prayLuckToken);
         require(msg.sender == admin);
         Token(token).transfer(msg.sender, value);
-	}
+    }
 
-	function rescue() external {
+    function rescue() external {
         require(msg.sender == admin);
         payable(msg.sender).transfer(address(this).balance);
-	}
+    }
 
     function setAdmin(address _admin) external {
         require(msg.sender == admin);
@@ -327,7 +334,7 @@ contract PrayLuckStar is StandardToken {
 
     function setUnitJumpDragonGatePrice(uint256 _unitJumpDragonGatePrice) external {
         require(msg.sender == admin);
-        require(_unitJumpDragonGatePrice <= 1000**18);
+        require(_unitJumpDragonGatePrice <= 1000*10**18);
         unitJumpDragonGatePrice = _unitJumpDragonGatePrice;
     }
 

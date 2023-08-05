@@ -1,64 +1,64 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 interface Token{
-	function totalSupply() external returns (uint256);
+    function totalSupply() external returns (uint256);
 
-	function balanceOf(address _owner) external returns (uint256 balance);
+    function balanceOf(address _owner) external returns (uint256 balance);
 
-	function transfer(address _to, uint256 _value) external returns (bool success);
+    function transfer(address _to, uint256 _value) external returns (bool success);
 
-	function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
 
-	function approve(address _spender, uint256 _value) external returns (bool success);
+    function approve(address _spender, uint256 _value) external returns (bool success);
 
-	function allowance(address _owner, address _spender) external returns (uint256 remaining);
+    function allowance(address _owner, address _spender) external returns (uint256 remaining);
 
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 contract StandardToken is Token {
 
-	uint256 total;
+    uint256 total;
 
-	function transfer(address _to, uint256 _value) external returns (bool success) {
-		require(balances[msg.sender] >= _value);
-		balances[msg.sender] -= _value;
-		balances[_to] += _value;
-		emit Transfer(msg.sender, _to, _value);
-		return true;
-	}
+    function transfer(address _to, uint256 _value) external returns (bool success) {
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
 
-	function transferFrom(address _from, address _to, uint256 _value) external returns (bool success) {
-		require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-		balances[_to] += _value;
-		balances[_from] -= _value;
-		allowed[_from][msg.sender] -= _value;
-		emit Transfer(_from, _to, _value);
-		return true;
-	}
-	function balanceOf(address _owner) external view returns (uint256 balance) {
-		return balances[_owner];
-	}
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success) {
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+    function balanceOf(address _owner) external view returns (uint256 balance) {
+        return balances[_owner];
+    }
 
-	function approve(address _spender, uint256 _value) external returns (bool success)
-	{
-	    allowed[msg.sender][_spender] = _value;
-		emit Approval(msg.sender, _spender, _value);
-		return true;
-	}
+    function approve(address _spender, uint256 _value) external returns (bool success)
+    {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-	function allowance(address _owner, address _spender) external view returns (uint256 remaining) {
-	    return allowed[_owner][_spender];
-	}
+    function allowance(address _owner, address _spender) external view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 
-	function totalSupply() external view returns (uint256) {
-		return total;
-	}
+    function totalSupply() external view returns (uint256) {
+        return total;
+    }
 
-	mapping (address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
 contract PrayLuck is StandardToken {
@@ -69,10 +69,10 @@ contract PrayLuck is StandardToken {
         uint256 LeftPrayLuck;
     }
 
-	/* Public variables of the token */
-	string public name;
-	uint8 public decimals;
-	string public symbol;
+    /* Public variables of the token */
+    string public name;
+    uint8 public decimals;
+    string public symbol;
     mapping (address => uint256) public mintTimeHistory;
     mapping (address => uint256) public goodManScore;
     GoodManInfo[] public goodManArray;
@@ -80,16 +80,16 @@ contract PrayLuck is StandardToken {
     uint8 public dailyMintCount = 1;
     uint256 public minBalance = 1*10**16; // 0.01ETH
 
-	constructor(uint256 _initialAmount, string memory _tokenName, uint8 _decimalUnits, string memory _tokenSymbol) {
-		balances[msg.sender] = _initialAmount;
-		total = _initialAmount;
-		name = _tokenName;
-		decimals = _decimalUnits;
-		symbol = _tokenSymbol;
+    constructor(uint256 _initialAmount, string memory _tokenName, string memory _tokenSymbol) {
+        balances[msg.sender] = _initialAmount;
+        total = _initialAmount;
+        name = _tokenName;
+        decimals = 0;
+        symbol = _tokenSymbol;
         admin = msg.sender;
-	}
+    }
 
-	event DailyMint(address indexed _goodMan, uint256 indexed _dailyMintCount);
+    event DailyMint(address indexed _goodMan, uint256 indexed _dailyMintCount);
 
     function getAndUseGoodMan() private returns(address goodMan) {
         goodMan = address(0);
@@ -177,14 +177,14 @@ contract PrayLuck is StandardToken {
         minBalance = _minBalance;
     }
 
-	function rescueToken(address token, uint256 value) external {
+    function rescueToken(address token, uint256 value) external {
         require(token != address(this));
         require(msg.sender == admin);
         Token(token).transfer(msg.sender, value);
-	}
+    }
 
-	function rescue() external {
+    function rescue() external {
         require(msg.sender == admin);
         payable(msg.sender).transfer(address(this).balance);
-	}
+    }
 }
